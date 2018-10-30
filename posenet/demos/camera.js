@@ -285,6 +285,10 @@ function detectPoseInRealTime(video, net) {
         ctx.rect(400, 50, 100, 100);
         ctx.strokeStyle = 'green';
         ctx.stroke();
+
+        ctx.rect(50, 50, 100, 100);
+        ctx.strokeStyle = 'silver';
+        ctx.stroke();
         ctx.strokeStyle = 'red';
 
         keypoints.forEach((kp) => {
@@ -296,7 +300,15 @@ function detectPoseInRealTime(video, net) {
             ctx.strokeStyle = 'lime';
             ctx.lineWidth = '5';
             ctx.stroke();
-          }
+            fetch('http://blynk-cloud.com/5288a4f94c0d4c32bee03bfa4c4968c1/update/V2?value=1')
+          } else if (kp.position.x > 50 && kp.position.x < 50 + 100 &&
+            kp.position.y > 50 && kp.position.y < 50 + 100){
+              ctx.rect(50, 50, 100, 100);
+              ctx.strokeStyle = 'gray';
+              ctx.lineWidth = '5';
+              ctx.stroke();
+              fetch('http://blynk-cloud.com/5288a4f94c0d4c32bee03bfa4c4968c1/update/V2?value=0')
+            }
         });
       }
     });
