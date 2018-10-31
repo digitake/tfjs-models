@@ -317,22 +317,52 @@ function detectPoseInRealTime(video, net) {
           drawBoundingBox(keypoints, ctx);
         }
 
-        const token = localStorage.getItem('token','f376dfd5fcfa44a4a303e9547353a50a');
+        const token = localStorage.getItem('token') || 'f376dfd5fcfa44a4a303e9547353a50a';
+        const tokenList = {
+          'IRtv1' : '07ebe52bf99b42b0a8afe1714343c00e',
+          'AC_1' : 'bea6ed1a6e254974835a770e48222e99',
+          'AC_2' : '9d57901983264434be254166f6f7ba3d',
+          'SmartSwitch1' : '5288a4f94c0d4c32bee03bfa4c4968c1',
+          'IRtv2' : '5320fda062474dabba17a23ccd5ee861',
+          'PowerMonitorModule' : '96a30956bc0f4503bcc221b491321c3b',
+          'AI Module' : '3df573fa61454d0fb9cd1f3db49037e8',
+          'SmartSwitch2' : '49e46f7fe07540f4b10e5b33f21cbabd',
+          'SmartPlug1' : '8678b16d252440418264c46b1eaffffd',
+          'DoorAlert' : 'e522e027d68c43fdb805e38b9d48ed10',
+          'SmartPlug2' : 'f376dfd5fcfa44a4a303e9547353a50a',
+          'SmartSwitch3' : '5a1383e214f34823bb9ebe22ff8d5d16',
+          'SmartPlug3' : '3de9abcd4f8b41dd91ebffc6e5ac9008'
+        }
 
         keypoints.forEach((kp) => {
+          
           if (inRightRegion(kp.position.x, kp.position.y)) {
-            console.log('>', kp.part);
-            console.log('pos=', kp.position);
             drawRightBox('lime', 10);
-            fetch(`http://blynk-cloud.com/${token}/update/V2?value=1`);
-            console.log(`Right Detected: Command On to ${token}`);
+            switch(kp.part){
+              case 'leftWrist':
+                fetch(`http://blynk-cloud.com/${token}/update/V2?value=1`);
+                console.log(`Right Detected: Command On to ${token}`);
+                break;
+              case 'rightWrist':
+                fetch(`http://blynk-cloud.com/${tokenList['SmartPlug1']}/update/V2?value=1`);
+                console.log(`Right Detected: Command On to ${token}`);
+                break;
+            }
           } 
           
           if (inLeftRegion(kp.position.x, kp.position.y)){
-              drawLeftBox('yellow', 10);
-              fetch(`http://blynk-cloud.com/${token}/update/V2?value=0`);
-              console.log(`Left Detected: Command On to ${token}`);
+            switch(kp.part){
+              case 'rightWrist':
+                drawLeftBox('yellow', 10);
+                fetch(`http://blynk-cloud.com/${token}/update/V2?value=0`);
+                console.log(`Left Detected: Command On to ${token}`);
+                break;
+              case 'leftWrist':
+                fetch(`http://blynk-cloud.com/${tokenList['SmartPlug1']}/update/V2?value=1`);
+                console.log(`Right Detected: Command On to ${token}`);
+                break;
             }
+          }
         });
       }
     });
