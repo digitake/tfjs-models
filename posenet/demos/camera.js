@@ -201,6 +201,8 @@ function setupFPS() {
   document.body.appendChild(stats.dom);
 }
 
+let holdCounter = 0;
+
 /**
  * Feeds an image to posenet to estimate poses - this is where the magic
  * happens. This function loops with a requestAnimationFrame method.
@@ -324,11 +326,8 @@ function detectPoseInRealTime(video, net) {
           'AC_2' : '9d57901983264434be254166f6f7ba3d',
           'SmartSwitch1' : '5288a4f94c0d4c32bee03bfa4c4968c1',
           'IRtv2' : '5320fda062474dabba17a23ccd5ee861',
-          'PowerMonitorModule' : '96a30956bc0f4503bcc221b491321c3b',
-          'AI Module' : '3df573fa61454d0fb9cd1f3db49037e8',
           'SmartSwitch2' : '49e46f7fe07540f4b10e5b33f21cbabd',
           'SmartPlug1' : '8678b16d252440418264c46b1eaffffd',
-          'DoorAlert' : 'e522e027d68c43fdb805e38b9d48ed10',
           'SmartPlug2' : 'f376dfd5fcfa44a4a303e9547353a50a',
           'SmartSwitch3' : '5a1383e214f34823bb9ebe22ff8d5d16',
           'SmartPlug3' : '3de9abcd4f8b41dd91ebffc6e5ac9008'
@@ -337,15 +336,17 @@ function detectPoseInRealTime(video, net) {
         keypoints.forEach((kp) => {
           
           if (inRightRegion(kp.position.x, kp.position.y)) {
-            drawRightBox('lime', 10);
             switch(kp.part){
               case 'leftWrist':
                 fetch(`http://blynk-cloud.com/${token}/update/V2?value=1`);
-                console.log(`Right Detected: Command On to ${token}`);
+                console.log(`Left Detected: Command On to ${token}`);
+                drawRightBox('lime', 10);
                 break;
               case 'rightWrist':
                 fetch(`http://blynk-cloud.com/${tokenList['SmartPlug1']}/update/V2?value=1`);
-                console.log(`Right Detected: Command On to ${token}`);
+                fetch(`http://blynk-cloud.com/${tokenList['SmartPlug3']}/update/V2?value=1`);
+                console.log(`Right Detected: Command On to ${tokenList['SmartPlug1']}`);
+                drawRightBox('lime', 10);
                 break;
             }
           } 
@@ -355,11 +356,13 @@ function detectPoseInRealTime(video, net) {
               case 'rightWrist':
                 drawLeftBox('yellow', 10);
                 fetch(`http://blynk-cloud.com/${token}/update/V2?value=0`);
-                console.log(`Left Detected: Command On to ${token}`);
+                console.log(`Left Detected: Command Off to ${token}`);
                 break;
               case 'leftWrist':
-                fetch(`http://blynk-cloud.com/${tokenList['SmartPlug1']}/update/V2?value=1`);
-                console.log(`Right Detected: Command On to ${token}`);
+                drawLeftBox('yellow', 10);
+                fetch(`http://blynk-cloud.com/${tokenList['SmartPlug1']}/update/V2?value=0`);
+                fetch(`http://blynk-cloud.com/${tokenList['SmartPlug3']}/update/V2?value=0`);
+                console.log(`Right Detected: Command Off to ${tokenList['SmartPlug1']}`);
                 break;
             }
           }
