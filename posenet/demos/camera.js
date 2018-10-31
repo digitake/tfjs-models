@@ -232,8 +232,8 @@ function detectPoseInRealTime(video, net) {
     }
   }
 
-  const drawLeftBox = drawStaticBoxBuilder(videoWidth*0.1, videoHeight*0.1, boxSize, boxSize);
-  const drawRightBox = drawStaticBoxBuilder(videoWidth*0.9-boxSize, videoHeight*0.1, boxSize, boxSize);
+  const drawLeftBox = drawStaticBoxBuilder(videoWidth*0.1, videoHeight*0.05, boxSize, boxSize);
+  const drawRightBox = drawStaticBoxBuilder(videoWidth*0.9-boxSize, videoHeight*0.05, boxSize, boxSize);
 
   async function poseDetectionFrame() {
     if (guiState.changeToArchitecture) {
@@ -301,8 +301,8 @@ function detectPoseInRealTime(video, net) {
       }
     }
 
-    const inLeftRegion = checkRegionBuilder(videoWidth*0.1, videoHeight*0.1, videoWidth*0.1+boxSize, videoHeight*0.1+boxSize);
-    const inRightRegion = checkRegionBuilder(videoWidth*0.9-boxSize, videoHeight*0.1, videoWidth*0.9-boxSize+boxSize, videoHeight*0.1+boxSize);
+    const inLeftRegion = checkRegionBuilder(videoWidth*0.1, videoHeight*0.05, videoWidth*0.1+boxSize, videoHeight*0.05+boxSize);
+    const inRightRegion = checkRegionBuilder(videoWidth*0.9-boxSize, videoHeight*0.05, videoWidth*0.9-boxSize+boxSize, videoHeight*0.05+boxSize);
 
     poses.forEach(({
       score,
@@ -334,38 +334,57 @@ function detectPoseInRealTime(video, net) {
         }
 
         keypoints.forEach((kp) => {
-          
+          let flag = 0;
           if (inRightRegion(kp.position.x, kp.position.y)) {
             switch(kp.part){
               case 'leftWrist':
                 fetch(`http://blynk-cloud.com/${token}/update/V2?value=1`);
                 console.log(`Left Detected: Command On to ${token}`);
                 drawRightBox('lime', 10);
+                flag += 1;
                 break;
               case 'rightWrist':
                 fetch(`http://blynk-cloud.com/${tokenList['SmartPlug1']}/update/V2?value=1`);
                 fetch(`http://blynk-cloud.com/${tokenList['SmartPlug3']}/update/V2?value=1`);
                 console.log(`Right Detected: Command On to ${tokenList['SmartPlug1']}`);
                 drawRightBox('lime', 10);
+
                 break;
             }
           } 
           
           if (inLeftRegion(kp.position.x, kp.position.y)){
+
+
             switch(kp.part){
               case 'rightWrist':
-                drawLeftBox('yellow', 10);
-                fetch(`http://blynk-cloud.com/${token}/update/V2?value=0`);
-                console.log(`Left Detected: Command Off to ${token}`);
+                if (holdCounter > 10)
+                {
+                  drawLeftBox('red', 10);
+                  console.log(`!!!`);
+                } else {
+                  drawLeftBox('yellow', 10);
+                  fetch(`http://blynk-cloud.com/${token}/update/V2?value=0`);
+                  console.log(`Left Detected: Command Off to ${token}`);
+                  flag += 1;
+                }
                 break;
               case 'leftWrist':
-                drawLeftBox('yellow', 10);
-                fetch(`http://blynk-cloud.com/${tokenList['SmartPlug1']}/update/V2?value=0`);
-                fetch(`http://blynk-cloud.com/${tokenList['SmartPlug3']}/update/V2?value=0`);
-                console.log(`Right Detected: Command Off to ${tokenList['SmartPlug1']}`);
+                if (holdCounter > 10){
+                  drawLeftBox('red', 10);
+                  console.log(`!!!`);
+                } else {
+                  drawLeftBox('yellow', 10);
+                  fetch(`http://blynk-cloud.com/${tokenList['SmartPlug1']}/update/V2?value=0`);
+                  fetch(`http://blynk-cloud.com/${tokenList['SmartPlug3']}/update/V2?value=0`);
+                  console.log(`Right Detected: Command Off to ${tokenList['SmartPlug1']}`);
+                }
                 break;
             }
           }
+
+          if (flag == 2)
+            holdCounter += 1;
         });
       }
     });
