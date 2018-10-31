@@ -317,7 +317,7 @@ function detectPoseInRealTime(video, net) {
           drawBoundingBox(keypoints, ctx);
         }
 
-        const token = 'd8c73e39bfff45c6ab40404d6e7f18f5';
+        const token = localStorage.getItem('token','f376dfd5fcfa44a4a303e9547353a50a');
 
         keypoints.forEach((kp) => {
           if (inRightRegion(kp.position.x, kp.position.y)) {
@@ -325,13 +325,13 @@ function detectPoseInRealTime(video, net) {
             console.log('pos=', kp.position);
             drawRightBox('lime', 10);
             fetch(`http://blynk-cloud.com/${token}/update/V2?value=1`);
-            console.log("Right Detected: Command On");
+            console.log(`Right Detected: Command On to ${token}`);
           } 
           
           if (inLeftRegion(kp.position.x, kp.position.y)){
               drawLeftBox('yellow', 10);
               fetch(`http://blynk-cloud.com/${token}/update/V2?value=0`);
-              console.log("Left Detected: Command Off");
+              console.log(`Left Detected: Command On to ${token}`);
             }
         });
       }
