@@ -23,8 +23,10 @@ import {
   drawBoundingBox,
 } from './demo_util';
 
-const videoWidth = 600;
-const videoHeight = 500;
+
+
+const videoWidth = document.body.clientWidth;
+const videoHeight = document.body.clientHeight;
 const stats = new Stats();
 
 function isAndroid() {
@@ -187,6 +189,8 @@ function setupGui(cameras, net) {
         break;
     }
   });
+
+  gui.close();
 }
 
 /**
@@ -209,6 +213,25 @@ function detectPoseInRealTime(video, net) {
 
   canvas.width = videoWidth;
   canvas.height = videoHeight;
+
+  const boxSize = 200;
+  const leftBoxColor = 'olive';
+  const rightBoxColor = 'green';
+
+  const drawStaticBoxBuilder = function(x,y,w,h){
+    return function(color, lineWidth=2){
+      const storedColor = ctx.strokeStyle;
+      ctx.beginPath();
+      ctx.rect(x, y, w, h);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth;
+      ctx.stroke();
+      ctx.strokeStyle = storedColor;
+    }
+  }
+
+  const drawLeftBox = drawStaticBoxBuilder(videoWidth*0.1, videoHeight*0.1, boxSize, boxSize);
+  const drawRightBox = drawStaticBoxBuilder(videoWidth*0.9-boxSize, videoHeight*0.1, boxSize, boxSize);
 
   async function poseDetectionFrame() {
     if (guiState.changeToArchitecture) {
@@ -267,6 +290,18 @@ function detectPoseInRealTime(video, net) {
     // For each pose (i.e. person) detected in an image, loop through the poses
     // and draw the resulting skeleton and keypoints if over certain confidence
     // scores
+    drawLeftBox(leftBoxColor);
+    drawRightBox(rightBoxColor);
+
+    const checkRegionBuilder = function(x1,y1,x2,y2) {
+      return function(x,y){
+        return x > x1 && x < x2 && y > y1 && y < y2;
+      }
+    }
+
+    const inLeftRegion = checkRegionBuilder(videoWidth*0.1, videoHeight*0.1, videoWidth*0.1+boxSize, videoHeight*0.1+boxSize);
+    const inRightRegion = checkRegionBuilder(videoWidth*0.9-boxSize, videoHeight*0.1, videoWidth*0.9-boxSize+boxSize, videoHeight*0.1+boxSize);
+
     poses.forEach(({
       score,
       keypoints,
@@ -282,32 +317,21 @@ function detectPoseInRealTime(video, net) {
           drawBoundingBox(keypoints, ctx);
         }
 
-        ctx.rect(400, 50, 100, 100);
-        ctx.strokeStyle = 'green';
-        ctx.stroke();
-
-        ctx.rect(50, 50, 100, 100);
-        ctx.strokeStyle = 'silver';
-        ctx.stroke();
-        ctx.strokeStyle = 'red';
+        const token = 'd8c73e39bfff45c6ab40404d6e7f18f5';
 
         keypoints.forEach((kp) => {
-          if (kp.position.x > 400 && kp.position.x < 400 + 100 &&
-            kp.position.y > 50 && kp.position.y < 50 + 100) {
+          if (inRightRegion(kp.position.x, kp.position.y)) {
             console.log('>', kp.part);
             console.log('pos=', kp.position);
-            ctx.rect(400, 50, 100, 100);
-            ctx.strokeStyle = 'lime';
-            ctx.lineWidth = '5';
-            ctx.stroke();
-            fetch('http://blynk-cloud.com/5288a4f94c0d4c32bee03bfa4c4968c1/update/V2?value=1')
-          } else if (kp.position.x > 50 && kp.position.x < 50 + 100 &&
-            kp.position.y > 50 && kp.position.y < 50 + 100){
-              ctx.rect(50, 50, 100, 100);
-              ctx.strokeStyle = 'gray';
-              ctx.lineWidth = '5';
-              ctx.stroke();
-              fetch('http://blynk-cloud.com/5288a4f94c0d4c32bee03bfa4c4968c1/update/V2?value=0')
+            drawRightBox('lime', 10);
+            fetch(`http://blynk-cloud.com/${token}/update/V2?value=1`);
+            console.log("Right Detected: Command On");
+          } 
+          
+          if (inLeftRegion(kp.position.x, kp.position.y)){
+              drawLeftBox('yellow', 10);
+              fetch(`http://blynk-cloud.com/${token}/update/V2?value=0`);
+              console.log("Left Detected: Command Off");
             }
         });
       }
