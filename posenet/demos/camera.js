@@ -302,14 +302,16 @@ function detectPoseInRealTime(video, net) {
     };
 
     const checkIfLayOnGround = function (kpList) {
-      const flatThreshold = 80;
-      const meanY = kpList.reduce((acc, kp) => kp.position.y + acc, 0) / kpList.length;
+      const flatThreshold = 350;
+      const meanY = kpList.reduce((acc, kp) => ['nose','leftEye','rightEye','leftEar','rightEar'].indexOf(kp.part) > 0 ? kp.position.y + acc:acc, 0) / 5.0;
+      
       const stdY = Math.sqrt(kpList.reduce((acc, kp) => {
         const diff = kp.position.y - meanY;
         return diff * diff;
       }, meanY));
-      //console.log("std",stdY);
-      return meanY > 0.1 * videoHeight && stdY < flatThreshold;
+      //if (stdY < 200)
+      console.log("std=",stdY, ",meanY=", meanY, '>',0.5 * videoHeight);
+      return meanY > 0.5 * videoHeight && stdY < flatThreshold;
     };
 
     const inLeftRegion = checkRegionBuilder(videoWidth * 0.1, videoHeight * 0.05, videoWidth * 0.1 + boxSize, videoHeight * 0.05 + boxSize);
@@ -406,7 +408,7 @@ function detectPoseInRealTime(video, net) {
           downCount++;
           console.log("count>", downCount);
           const sound = document.getElementById('xyz');
-          if (downCount  > 20 && !sound.ended){
+          if (downCount  > 20 && sound.paused){
             console.log("warning!!! man down man down!!!");
             sound.play();
             downCount = 0;
