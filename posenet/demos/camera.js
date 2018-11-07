@@ -302,14 +302,14 @@ function detectPoseInRealTime(video, net) {
     };
 
     const checkIfLayOnGround = function (kpList) {
-      const flatThreshold = 100;
+      const flatThreshold = 80;
       const meanY = kpList.reduce((acc, kp) => kp.position.y + acc, 0) / kpList.length;
       const stdY = Math.sqrt(kpList.reduce((acc, kp) => {
         const diff = kp.position.y - meanY;
         return diff * diff;
       }, meanY));
-      console.log("std",stdY);
-      return stdY < flatThreshold;
+      //console.log("std",stdY);
+      return meanY > 0.1 * videoHeight && stdY < flatThreshold;
     };
 
     const inLeftRegion = checkRegionBuilder(videoWidth * 0.1, videoHeight * 0.05, videoWidth * 0.1 + boxSize, videoHeight * 0.05 + boxSize);
@@ -373,7 +373,7 @@ function detectPoseInRealTime(video, net) {
                 } else {
                   drawLeftBox('yellow', 10);
                   fetch(`http://blynk-cloud.com/${token}/update/V2?value=0`);
-                  console.log(`Left Detected: Command Off to ${token}`);
+                  //console.log(`Left Detected: Command Off to ${token}`);
                   flag += 1;
                 }
                 break;
@@ -385,7 +385,7 @@ function detectPoseInRealTime(video, net) {
                   drawLeftBox('yellow', 10);
                   fetch(`http://blynk-cloud.com/${tokenList['SmartPlug1']}/update/V2?value=0`);
                   fetch(`http://blynk-cloud.com/${tokenList['SmartPlug3']}/update/V2?value=0`);
-                  console.log(`Right Detected: Command Off to ${tokenList['SmartPlug1']}`);
+                  //console.log(`Right Detected: Command Off to ${tokenList['SmartPlug1']}`);
                 }
                 break;
             }
@@ -404,8 +404,9 @@ function detectPoseInRealTime(video, net) {
           ctx.stroke();
           ctx.strokeStyle = storedColor;
           downCount++;
+          console.log("count>", downCount);
           const sound = document.getElementById('xyz');
-          if (downCount  > 20 && sound.ended){
+          if (downCount  > 20 && !sound.ended){
             console.log("warning!!! man down man down!!!");
             sound.play();
             downCount = 0;
