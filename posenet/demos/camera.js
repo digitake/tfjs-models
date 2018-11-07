@@ -201,6 +201,7 @@ function setupFPS() {
 }
 
 let holdCounter = 0;
+let downCount = 0;
 
 /**
  * Feeds an image to posenet to estimate poses - this is where the magic
@@ -301,13 +302,13 @@ function detectPoseInRealTime(video, net) {
     };
 
     const checkIfLayOnGround = function (kpList) {
-      const flatThreshold = 20;
-      const meanY = kpList.reduce((acc, kp) => kp.position.y + acc) / kpList.length;
+      const flatThreshold = 100;
+      const meanY = kpList.reduce((acc, kp) => kp.position.y + acc, 0) / kpList.length;
       const stdY = Math.sqrt(kpList.reduce((acc, kp) => {
         const diff = kp.position.y - meanY;
         return diff * diff;
       }, meanY));
-
+      console.log("std",stdY);
       return stdY < flatThreshold;
     };
 
@@ -398,10 +399,16 @@ function detectPoseInRealTime(video, net) {
         if (checkIfLayOnGround(keypoints)) {
           const storedColor = ctx.strokeStyle;
           ctx.strokeStyle = 'red';
-          ctx.lineWidth = lineWidth;
+          ctx.lineWidth = 10;
           drawBoundingBox(keypoints, ctx);
           ctx.stroke();
           ctx.strokeStyle = storedColor;
+          downCount++;
+          if (downCount  > 20){
+            console.log("warning!!! man down man down!!!");
+            document.getElementById('xyz').play();
+            downCount = 0;
+          }
         }
       }
     });
@@ -414,6 +421,7 @@ function detectPoseInRealTime(video, net) {
 
   poseDetectionFrame();
 }
+
 
 /**
  * Kicks off the demo by loading the posenet model, finding and loading
