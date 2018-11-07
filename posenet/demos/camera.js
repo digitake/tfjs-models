@@ -24,7 +24,6 @@ import {
 } from './demo_util';
 
 
-
 const videoWidth = document.body.clientWidth;
 const videoHeight = document.body.clientHeight;
 const stats = new Stats();
@@ -220,8 +219,8 @@ function detectPoseInRealTime(video, net) {
   const leftBoxColor = 'olive';
   const rightBoxColor = 'green';
 
-  const drawStaticBoxBuilder = function(x,y,w,h){
-    return function(color, lineWidth=2){
+  const drawStaticBoxBuilder = function (x, y, w, h) {
+    return function (color, lineWidth = 2) {
       const storedColor = ctx.strokeStyle;
       ctx.beginPath();
       ctx.rect(x, y, w, h);
@@ -229,11 +228,11 @@ function detectPoseInRealTime(video, net) {
       ctx.lineWidth = lineWidth;
       ctx.stroke();
       ctx.strokeStyle = storedColor;
-    }
-  }
+    };
+  };
 
-  const drawLeftBox = drawStaticBoxBuilder(videoWidth*0.1, videoHeight*0.05, boxSize, boxSize);
-  const drawRightBox = drawStaticBoxBuilder(videoWidth*0.9-boxSize, videoHeight*0.05, boxSize, boxSize);
+  const drawLeftBox = drawStaticBoxBuilder(videoWidth * 0.1, videoHeight * 0.05, boxSize, boxSize);
+  const drawRightBox = drawStaticBoxBuilder(videoWidth * 0.9 - boxSize, videoHeight * 0.05, boxSize, boxSize);
 
   async function poseDetectionFrame() {
     if (guiState.changeToArchitecture) {
@@ -295,14 +294,25 @@ function detectPoseInRealTime(video, net) {
     drawLeftBox(leftBoxColor);
     drawRightBox(rightBoxColor);
 
-    const checkRegionBuilder = function(x1,y1,x2,y2) {
-      return function(x,y){
+    const checkRegionBuilder = function (x1, y1, x2, y2) {
+      return function (x, y) {
         return x > x1 && x < x2 && y > y1 && y < y2;
-      }
-    }
+      };
+    };
 
-    const inLeftRegion = checkRegionBuilder(videoWidth*0.1, videoHeight*0.05, videoWidth*0.1+boxSize, videoHeight*0.05+boxSize);
-    const inRightRegion = checkRegionBuilder(videoWidth*0.9-boxSize, videoHeight*0.05, videoWidth*0.9-boxSize+boxSize, videoHeight*0.05+boxSize);
+    const checkIfLayOnGround = function (kpList) {
+      const flatThreshold = 20;
+      const meanY = kpList.reduce((acc, kp) => kp.position.y + acc) / kpList.length;
+      const stdY = Math.sqrt(kpList.reduce((acc, kp) => {
+        const diff = kp.position.y - meanY;
+        return diff * diff;
+      }, meanY));
+
+      return stdY < flatThreshold;
+    };
+
+    const inLeftRegion = checkRegionBuilder(videoWidth * 0.1, videoHeight * 0.05, videoWidth * 0.1 + boxSize, videoHeight * 0.05 + boxSize);
+    const inRightRegion = checkRegionBuilder(videoWidth * 0.9 - boxSize, videoHeight * 0.05, videoWidth * 0.9 - boxSize + boxSize, videoHeight * 0.05 + boxSize);
 
     poses.forEach(({
       score,
@@ -321,22 +331,22 @@ function detectPoseInRealTime(video, net) {
 
         const token = localStorage.getItem('token') || 'f376dfd5fcfa44a4a303e9547353a50a';
         const tokenList = {
-          'IRtv1' : '07ebe52bf99b42b0a8afe1714343c00e',
-          'AC_1' : 'bea6ed1a6e254974835a770e48222e99',
-          'AC_2' : '9d57901983264434be254166f6f7ba3d',
-          'SmartSwitch1' : '5288a4f94c0d4c32bee03bfa4c4968c1',
-          'IRtv2' : '5320fda062474dabba17a23ccd5ee861',
-          'SmartSwitch2' : '49e46f7fe07540f4b10e5b33f21cbabd',
-          'SmartPlug1' : '8678b16d252440418264c46b1eaffffd',
-          'SmartPlug2' : 'f376dfd5fcfa44a4a303e9547353a50a',
-          'SmartSwitch3' : '5a1383e214f34823bb9ebe22ff8d5d16',
-          'SmartPlug3' : '3de9abcd4f8b41dd91ebffc6e5ac9008'
-        }
+          'IRtv1': '07ebe52bf99b42b0a8afe1714343c00e',
+          'AC_1': 'bea6ed1a6e254974835a770e48222e99',
+          'AC_2': '9d57901983264434be254166f6f7ba3d',
+          'SmartSwitch1': '5288a4f94c0d4c32bee03bfa4c4968c1',
+          'IRtv2': '5320fda062474dabba17a23ccd5ee861',
+          'SmartSwitch2': '49e46f7fe07540f4b10e5b33f21cbabd',
+          'SmartPlug1': '8678b16d252440418264c46b1eaffffd',
+          'SmartPlug2': 'f376dfd5fcfa44a4a303e9547353a50a',
+          'SmartSwitch3': '5a1383e214f34823bb9ebe22ff8d5d16',
+          'SmartPlug3': '3de9abcd4f8b41dd91ebffc6e5ac9008',
+        };
 
         keypoints.forEach((kp) => {
           let flag = 0;
           if (inRightRegion(kp.position.x, kp.position.y)) {
-            switch(kp.part){
+            switch (kp.part) {
               case 'leftWrist':
                 fetch(`http://blynk-cloud.com/${token}/update/V2?value=1`);
                 console.log(`Left Detected: Command On to ${token}`);
@@ -351,15 +361,12 @@ function detectPoseInRealTime(video, net) {
 
                 break;
             }
-          } 
-          
-          if (inLeftRegion(kp.position.x, kp.position.y)){
+          }
 
-
-            switch(kp.part){
+          if (inLeftRegion(kp.position.x, kp.position.y)) {
+            switch (kp.part) {
               case 'rightWrist':
-                if (holdCounter > 10)
-                {
+                if (holdCounter > 10) {
                   drawLeftBox('red', 10);
                   console.log(`!!!`);
                 } else {
@@ -370,7 +377,7 @@ function detectPoseInRealTime(video, net) {
                 }
                 break;
               case 'leftWrist':
-                if (holdCounter > 10){
+                if (holdCounter > 10) {
                   drawLeftBox('red', 10);
                   console.log(`!!!`);
                 } else {
@@ -383,9 +390,19 @@ function detectPoseInRealTime(video, net) {
             }
           }
 
-          if (flag == 2)
+          if (flag == 2) {
             holdCounter += 1;
+          }
         });
+
+        if (checkIfLayOnGround(keypoints)) {
+          const storedColor = ctx.strokeStyle;
+          ctx.strokeStyle = 'red';
+          ctx.lineWidth = lineWidth;
+          drawBoundingBox(keypoints, ctx);
+          ctx.stroke();
+          ctx.strokeStyle = storedColor;
+        }
       }
     });
 
