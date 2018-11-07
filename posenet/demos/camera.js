@@ -404,9 +404,10 @@ function detectPoseInRealTime(video, net) {
           ctx.stroke();
           ctx.strokeStyle = storedColor;
           downCount++;
-          if (downCount  > 20 && x.ended){
+          const sound = document.getElementById('xyz');
+          if (downCount  > 20 && sound.ended){
             console.log("warning!!! man down man down!!!");
-            document.getElementById('xyz').play();
+            sound.play();
             downCount = 0;
           }
         }
